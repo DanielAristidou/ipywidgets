@@ -14,6 +14,7 @@ from .widget_core import CoreWidget
 from .docutils import doc_subst
 from .trait_types import TypedTuple
 from traitlets import Unicode, CaselessStrEnum, Instance
+from copy import copy
 
 
 _doc_snippets = {}
@@ -67,6 +68,24 @@ class Box(DOMWidget, CoreWidget):
     def _fire_children_displayed(self):
         for child in self.children:
             child._handle_displayed()
+
+    def __copy__(self):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__init__(children=tuple(copy(child) for child in self.children))
+
+        new_state = {key: value for key, value in self.get_state().items() if
+                     not key.startswith('_') and
+                     not key == 'layout' and
+                     not key == 'style' and
+                     not key == 'children'}
+
+        for key, value in new_state.items():
+            setattr(result, key, value)
+
+        # result.layout = self.layout
+
+        return result
 
 
 @register
